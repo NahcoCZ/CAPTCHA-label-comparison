@@ -11,3 +11,4 @@ data/solver/captcha-tile-6.jpeg
 data/solver/captcha-tile-7.jpeg
 data/solver/captcha-tile-8.jpeg
 data/images/idxdata.csv
+src/testing.py
