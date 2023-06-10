@@ -73,7 +73,7 @@ class MainMenuPage(tk.Frame):
             self.prev_page_button.configure(state="disabled")
         else:
             self.prev_page_button.configure(state="normal")
-        if self.current_index > (23489 - 99):
+        if self.current_index > (54107 - 99):
             self.next_page_button.configure(state="disabled")
         else:
             self.next_page_button.configure(state="normal")
@@ -83,7 +83,7 @@ class MainMenuPage(tk.Frame):
         current_index = self.current_index
         if labelled:
             self.middle_button.configure(text="Hide Labelled", command=lambda: self.create_labels(False))
-            while len(image_indices) < 100 and current_index < 23489:
+            while len(image_indices) < 100 and current_index < 54107:
                 string = "%d.jpeg" % current_index
                 if self.controller.check_if_labelled(current_index) == True:
                     string += " (labelled)"
@@ -92,7 +92,7 @@ class MainMenuPage(tk.Frame):
                 current_index += 1
         else:
             self.middle_button.configure(text="Show Labelled", command=lambda: self.create_labels(True))
-            while len(image_indices) < 100 and current_index < 23489:
+            while len(image_indices) < 100 and current_index < 54107:
                 if self.controller.check_if_labelled(current_index) == False:
                     image_indices.append(current_index)
                     display_names.append("%d.jpeg" % current_index)
@@ -177,7 +177,7 @@ class LabellingPage(tk.Frame):
             self.prev_button.configure(state="disabled")
         else:
             self.prev_button.configure(state="normal")
-        if self.index == 23489:
+        if self.index > 54007:
             self.next_button.configure(state="disabled")
         else:
             self.next_button.configure(state="normal")
