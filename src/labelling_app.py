@@ -204,7 +204,7 @@ class LabellingPage(tk.Frame):
         """
         if self.controller.check_if_labelled(self.index):
             return eval(self.controller.label_data["label"][self.index])
-        return [0 for i in range(12)]
+        return [0 for i in range(len(self.controller.label_names))]
     
     def create_switches(self):
         """
