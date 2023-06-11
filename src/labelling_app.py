@@ -2,10 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from PIL import ImageTk, Image
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import os
 
 class MainMenuPage(tk.Frame):
     """
@@ -25,10 +22,10 @@ class MainMenuPage(tk.Frame):
         query_label = tk.Label(query_frame, text="Search")
         self.query_value = tk.StringVar()
         self.query_entry = tk.Entry(query_frame, textvariable=self.query_value, validate="key", validatecommand=(self.register(self.validate_query), "%P"))
-        self.query_button = tk.Button(query_frame, text="Search", command=self.submit_query)
+        self.query_button = tk.Button(query_frame, text="Search", command=self.submit_query, state="disabled")
         query_label.pack()
-        self.query_entry.pack(side=tk.LEFT)
-        self.query_button.pack(side=tk.RIGHT)
+        self.query_entry.pack(side=tk.LEFT, padx=5)
+        self.query_button.pack(side=tk.RIGHT, padx=5)
 
         # Canvas Creation
         self.canvas = tk.Canvas(controller)
