@@ -16,9 +16,23 @@ class MainMenuPage(tk.Frame):
         self.controller = controller
         self.controller.bind("<Button-1>", self.handle_click)
 
+        # Query Bar
+        self.heading = tk.Frame(controller, padx=30, pady=5)
+        self.heading.pack(fill=tk.X)
+        query_frame = tk.Frame(self.heading)
+        query_frame.pack(side=tk.RIGHT)
+
+        query_label = tk.Label(query_frame, text="Search")
+        self.query_value = tk.StringVar()
+        self.query_entry = tk.Entry(query_frame, textvariable=self.query_value, validate="key", validatecommand=(self.register(self.validate_query), "%P"))
+        self.query_button = tk.Button(query_frame, text="Search", command=self.submit_query)
+        query_label.pack()
+        self.query_entry.pack(side=tk.LEFT)
+        self.query_button.pack(side=tk.RIGHT)
+
         # Canvas Creation
         self.canvas = tk.Canvas(controller)
-        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # Scroll Bar implementation
         self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.canvas.yview)
@@ -79,19 +93,31 @@ class MainMenuPage(tk.Frame):
         Validate the input in the search bar
         and enable submit button when done
         """
-        if not value.isdigit():
-            self.submit_button.configure(state="disabled")
-            self.warning.pack()
-            return True
-        
-        value = int(value)
-        if value < 0 or value > 54107:
-            self.warning.pack()
-        else:
+        if value.isdigit() and (int(value) >= 0 and int(value) <= 54107):
             self.warning.pack_forget()
-            self.submit_button.configure(state="normal")      
+            self.submit_button.configure(state="normal") 
+        else:
+            self.submit_button.configure(state="disabled")
+            self.warning.pack()     
         return True
 
+    def validate_query(self, value):
+        """
+        Validate the input in the query bar
+        and enable submit button when done
+        """
+        if value.isdigit() and (int(value) >= 0 and int(value) <= 54007):
+            self.query_button.configure(state="normal")
+        else:
+            self.query_button.configure(state="disabled")
+        return True
+
+    def submit_query(self):
+        """
+        Change the list to start from the index in the query entry
+        """
+        self.current_index = int(self.query_value.get())
+        self.display_current()
 
     def submit_search(self):
         """
@@ -164,6 +190,7 @@ class MainMenuPage(tk.Frame):
         print("INDEX %d CLICKED" % index)
         self.controller.to_label = index
         self.canvas.destroy()
+        self.heading.destroy()
         self.scrollbar.destroy()
         self.controller.show_page(LabellingPage)
 
