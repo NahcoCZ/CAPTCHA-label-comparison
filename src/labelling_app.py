@@ -14,6 +14,7 @@ class MainMenuPage(tk.Frame):
     def __init__(self, controller):
         tk.Frame.__init__(self)
         self.controller = controller
+        self.controller.bind("<Button-1>", self.handle_click)
 
         # Canvas Creation
         self.canvas = tk.Canvas(controller)
@@ -38,6 +39,16 @@ class MainMenuPage(tk.Frame):
         self.prev_page_button.pack(side=tk.LEFT)
         self.next_page_button.pack(side=tk.RIGHT)
         self.pack(fill=tk.BOTH, padx=(20, 40))
+        
+        # Add Search Bar
+        search_frame = tk.Frame(self)
+        self.entry_value = tk.StringVar()
+        self.entry_bar = tk.Entry(search_frame, textvariable=self.entry_value, validate="key", validatecommand=(self.register(self.validate_search), "%P"))
+        self.submit_button = tk.Button(search_frame, text="Open", command=self.submit_search, state="disabled")
+        self.warning = tk.Label(self, text="Please input integer 0 - 54107", foreground="red")
+        self.entry_bar.pack(side=tk.LEFT, padx=5)
+        self.submit_button.pack(side=tk.RIGHT, padx=5)
+        search_frame.pack()
 
     def prev_page(self):
         """
@@ -63,6 +74,37 @@ class MainMenuPage(tk.Frame):
         else:
             self.create_labels(True)
 
+    def validate_search(self, value):
+        """
+        Validate the input in the search bar
+        and enable submit button when done
+        """
+        if not value.isdigit():
+            self.submit_button.configure(state="disabled")
+            self.warning.pack()
+            return True
+        
+        value = int(value)
+        if value < 0 or value > 54107:
+            self.warning.pack()
+        else:
+            self.warning.pack_forget()
+            self.submit_button.configure(state="normal")      
+        return True
+
+
+    def submit_search(self):
+        """
+        Open the user's input index 
+        """
+        self.open_label_page(int(self.entry_value.get()))
+
+    def handle_click(self, event):
+        """
+        Used to unfocus whenever any click occurs outside the entry widget (search bar)
+        """
+        if not isinstance(event.widget, tk.Entry):
+            self.controller.focus()
 
     def create_labels(self, labelled=False):
         """
