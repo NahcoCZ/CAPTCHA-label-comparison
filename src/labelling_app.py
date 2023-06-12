@@ -2,10 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 from PIL import ImageTk, Image
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import os
 
 class MainMenuPage(tk.Frame):
     """
@@ -14,10 +11,25 @@ class MainMenuPage(tk.Frame):
     def __init__(self, controller):
         tk.Frame.__init__(self)
         self.controller = controller
+        self.controller.bind("<Button-1>", self.handle_click)
+
+        # Query Bar
+        self.heading = tk.Frame(controller, padx=30, pady=5)
+        self.heading.pack(fill=tk.X)
+        query_frame = tk.Frame(self.heading)
+        query_frame.pack(side=tk.RIGHT)
+
+        query_label = tk.Label(query_frame, text="Search")
+        self.query_value = tk.StringVar()
+        self.query_entry = tk.Entry(query_frame, textvariable=self.query_value, validate="key", validatecommand=(self.register(self.validate_query), "%P"))
+        self.query_button = tk.Button(query_frame, text="Search", command=self.submit_query, state="disabled")
+        query_label.pack()
+        self.query_entry.pack(side=tk.LEFT, padx=5)
+        self.query_button.pack(side=tk.RIGHT, padx=5)
 
         # Canvas Creation
         self.canvas = tk.Canvas(controller)
-        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
 
         # Scroll Bar implementation
         self.scrollbar = ttk.Scrollbar(self.canvas, orient=tk.VERTICAL, command=self.canvas.yview)
@@ -38,6 +50,16 @@ class MainMenuPage(tk.Frame):
         self.prev_page_button.pack(side=tk.LEFT)
         self.next_page_button.pack(side=tk.RIGHT)
         self.pack(fill=tk.BOTH, padx=(20, 40))
+        
+        # Add Search Bar
+        search_frame = tk.Frame(self)
+        self.entry_value = tk.StringVar()
+        self.entry_bar = tk.Entry(search_frame, textvariable=self.entry_value, validate="key", validatecommand=(self.register(self.validate_search), "%P"))
+        self.submit_button = tk.Button(search_frame, text="Open", command=self.submit_search, state="disabled")
+        self.warning = tk.Label(self, text="Please input integer 0 - 54107", foreground="red")
+        self.entry_bar.pack(side=tk.LEFT, padx=5)
+        self.submit_button.pack(side=tk.RIGHT, padx=5)
+        search_frame.pack()
 
     def prev_page(self):
         """
@@ -63,6 +85,49 @@ class MainMenuPage(tk.Frame):
         else:
             self.create_labels(True)
 
+    def validate_search(self, value):
+        """
+        Validate the input in the search bar
+        and enable submit button when done
+        """
+        if value.isdigit() and (int(value) >= 0 and int(value) <= 54107):
+            self.warning.pack_forget()
+            self.submit_button.configure(state="normal") 
+        else:
+            self.submit_button.configure(state="disabled")
+            self.warning.pack()     
+        return True
+
+    def validate_query(self, value):
+        """
+        Validate the input in the query bar
+        and enable submit button when done
+        """
+        if value.isdigit() and (int(value) >= 0 and int(value) <= 54007):
+            self.query_button.configure(state="normal")
+        else:
+            self.query_button.configure(state="disabled")
+        return True
+
+    def submit_query(self):
+        """
+        Change the list to start from the index in the query entry
+        """
+        self.current_index = int(self.query_value.get())
+        self.display_current()
+
+    def submit_search(self):
+        """
+        Open the user's input index 
+        """
+        self.open_label_page(int(self.entry_value.get()))
+
+    def handle_click(self, event):
+        """
+        Used to unfocus whenever any click occurs outside the entry widget (search bar)
+        """
+        if not isinstance(event.widget, tk.Entry):
+            self.controller.focus()
 
     def create_labels(self, labelled=False):
         """
@@ -122,6 +187,7 @@ class MainMenuPage(tk.Frame):
         print("INDEX %d CLICKED" % index)
         self.controller.to_label = index
         self.canvas.destroy()
+        self.heading.destroy()
         self.scrollbar.destroy()
         self.controller.show_page(LabellingPage)
 
