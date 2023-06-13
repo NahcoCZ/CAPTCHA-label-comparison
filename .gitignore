@@ -1,5 +1,7 @@
 image_data.npy
 label_data.npy
+X.npy
+Y.npy
 data/solver/captcha.jpeg
 data/solver/captcha-tile-0.jpeg
 data/solver/captcha-tile-1.jpeg
