@@ -314,7 +314,9 @@ class Application():
         Y = self.result[0]
         plt.bar(X, Y)
         plt.xlabel("Attempt")
+        plt.xticks(X, self.result[1])
         plt.ylabel("Verify Count")
+        plt.ylim(0, 5)
         plt.title("RESULT")
         plt.show()
         with open("../data/multiresult/result.csv", "w") as file:
