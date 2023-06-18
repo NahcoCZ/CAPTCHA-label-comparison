@@ -5,17 +5,20 @@ import numpy as np
 import tensorflow as tf
 from time import sleep
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from PIL import Image
 
 class WebDriver(webdriver.Chrome):
-    _attempts = 0
-    _click_count = 0
-    _clicked = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._attempts = 0
+        self._local_click_count = 0
+        self._click_count = 0
+        self.reload_counter = 0
+        self._clicked = []
         self.get("https://patrickhlauke.github.io/recaptcha/")
         self.fullscreen_window()
         self.find_element_by_css_selector('[title="reCAPTCHA"]').click()
@@ -36,7 +39,10 @@ class WebDriver(webdriver.Chrome):
         Finds a 3x3 box and downloads the original image
         """
         self._click_count = 0
+        self._local_click_count = 0
         self._find_3x3_box()
+        if self.reload_counter > 7:
+            return
         urllib.request.urlretrieve(self.find_element_by_class_name("rc-image-tile-33").get_attribute("src"), "../data/solver/captcha.jpeg")
         self.images = self._crop_image_and_convert(Image.open("../data/solver/captcha.jpeg"))
 
@@ -52,10 +58,13 @@ class WebDriver(webdriver.Chrome):
         adds to click counter
         """
         self._click_count += 1
-        self._click(*self.table_coords[index])
+        self._local_click_count += 1
+        self.find_elements_by_tag_name("td")[index].click()
+        # self._click(*self.table_coords[index])
         self._clicked.append(index)
         
     def update_image(self):
+        print("DEBUG =", self._clicked)
         for index in self._clicked:
             img_element = self.find_elements_by_tag_name("td")[index].find_element_by_class_name("rc-image-tile-11")
             file_path = "../data/solver/captcha-tile-%d.jpeg" % index
@@ -70,13 +79,14 @@ class WebDriver(webdriver.Chrome):
         if successful, return the attempts count
         """
         self._attempts += 1
-        self._click(self.verifyX, self.verifyY)
+        # self._click(self.verifyX, self.verifyY)
+        self.find_element_by_id("recaptcha-verify-button").click()
         sleep(3)
 
         if self._check_success() is True:
             return self._attempts
         else:
-            if self._click_count < 3:
+            if self._local_click_count < 3:
                 self._reload()
                 print("DEBUG RELOAD")
             self.initialize()
@@ -89,8 +99,12 @@ class WebDriver(webdriver.Chrome):
         # Check if there are any elements with rc-image-tile-33
         img_element = self._check_images()
         while img_element is None:
+            if self.reload_counter > 7:
+                return
             self._reload()
+            self.reload_counter += 1
             img_element = self._check_images()
+        self.reload_counter = 0
 
     def _process_image(self, img):
         """
@@ -121,7 +135,8 @@ class WebDriver(webdriver.Chrome):
         pyautogui.click()
 
     def _reload(self):
-        self._click(self.reloadX, self.reloadY)
+        # self._click(self.reloadX, self.reloadY)
+        self.find_element_by_id("recaptcha-reload-button").click()
         sleep(1)
 
     def _find_coordinates_of_element(self, element):
@@ -139,6 +154,10 @@ class WebDriver(webdriver.Chrome):
                 return i
             
     def _check_success(self):
+        """
+        Used to check if the captcha verification is successful
+        True if yes
+        """
         self.switch_to.default_content()
         self.switch_to.frame(self.find_element_by_css_selector('[title="reCAPTCHA"]'))
         checker = self.find_elements_by_css_selector('[aria-checked="true"]')
@@ -217,8 +236,11 @@ class Application():
             ]
         
         while count:
+            # try:
             self._solve_captcha()
             count -= 1
+            # except Exception:
+            #     print("ERROR CAUGHT")
         
     def _solve_captcha(self):
         """
@@ -228,6 +250,9 @@ class Application():
 
         # SOLVE HERE
         while True:
+            if driver.reload_counter > 7:
+                driver.quit()
+                return
             predictions = self.model.predict(driver.get_images()) # type: ignore
             label_index = driver.get_captcha_label(self.captcha_labels)
             self._predict(driver, predictions, label_index)
@@ -246,20 +271,23 @@ class Application():
         Loop the prediction while clicks are not 0
         """
         while True:
-            images = driver.get_images()
-            index = 0
-            for i in images:
-                plt.imshow(i)
-                plt.show()
-                for j in predictions[index]:
-                    print("%s: %.4f" % (self.label_names[np.where(predictions[index] == j)[0][0]], j))
-                index += 1
+            # UNCOMMENT TO SEE PREDICTION RESULTS
+            # images = driver.get_images()
+            # index = 0
+            # for i in images:
+            #     plt.imshow(i)
+            #     plt.show()
+            #     for j in predictions[index]:
+            #         print("%s: %.4f" % (self.label_names[np.where(predictions[index] == j)[0][0]], j))
+            #     index += 1
+            driver.set_click_count(0)
             for i in predictions:
                 # CONFIGURE DECODE THRESHOLD HERE
-                if i[label] > 0.2:
+                if i[label] >= 0.2:
                     driver.click_box(np.where(predictions == i)[0][0])
             if driver.get_click_count() > 0:
-                sleep(5)
+                sleep(8)
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "rc-image-tile-11")))
                 driver.set_click_count(0)
                 driver.update_image()
                 predictions = self.model.predict(driver.get_images()) # type: ignore
@@ -279,5 +307,15 @@ class Application():
 if __name__ == "__main__":
     # TABLE RESULT WILL SHOW VERIFY ATTEMPTS IN EACH CAPTCHA ATTEMPT
     # 0 MEANS IT FAILED (VERIFY ATTEMPTS >= 5)
-    app = Application("../data/solver/test.h5", 1, "multi")
+    app = Application("../data/solver/multilabel_model.h5", 3, "multi")
     app.get_result()
+    app = Application("../data/solver/multilabel_model_trained.h5", 3, "multi")
+    app.get_result()
+    app = Application("../data/solver/test.h5", 3, "multi")
+    app.get_result()
+    # app = Application("../data/solver/multilabel_model_trained.h5", 100, "multi")
+    # app.get_result()
+    # app = Application("../data/solver/test.h5", 100, "multi")
+    # app.get_result()
+    # app = Application("../data/solver/model_test2.h5", 100, "single")
+    # app.get_result()
