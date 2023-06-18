@@ -199,7 +199,7 @@ class Application():
         mode: (multi/single) for the label types
         """
         self.model = tf.keras.models.load_model(model_path)
-        self.result = []
+        self.result = [[], []]
 
         if mode == "multi":
             self.label_names = [
@@ -256,6 +256,7 @@ class Application():
         print("user_agent =", user_agent)
         options.add_argument(f'user-agent={user_agent}')
         driver = WebDriver(executable_path="../driver/chromedriver.exe")
+        solved_at = "None"
 
         # SOLVE HERE
         while True:
@@ -267,11 +268,13 @@ class Application():
             self._predict(driver, predictions, label_index)
             current_result = driver.submit(self.label_names[label_index]) # type: ignore
             if current_result:
+                solved_at = self.label_names[label_index] # type: ignore
                 break
             if driver.get_attempts() == 5:
                 current_result = 0
                 break
-        self.result.append(current_result)
+        self.result[0].append(current_result)
+        self.result[1].append(solved_at)
         driver.quit()
         return True
 
@@ -307,13 +310,15 @@ class Application():
                 break
 
     def get_result(self):
-        X = range(1, len(self.result) + 1)
-        Y = self.result
+        X = range(1, len(self.result[0]) + 1)
+        Y = self.result[0]
         plt.bar(X, Y)
         plt.xlabel("Attempt")
         plt.ylabel("Verify Count")
         plt.title("RESULT")
         plt.show()
+        with open("../data/multiresult/result.csv", "w") as file:
+            file.write(str(self.result))
 
 # MAIN DRIVER
 if __name__ == "__main__":
