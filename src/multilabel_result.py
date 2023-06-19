@@ -239,10 +239,9 @@ class Application():
                 ["traffic lights"]
             ]
         
-        while count:
+        while len(self.result[0]) < count:
             try:
-                if self._solve_captcha():
-                    count -= 1
+                self._solve_captcha()
             except Exception:
                 print("ERROR CAUGHT")
         
@@ -276,6 +275,7 @@ class Application():
         self.result[0].append(current_result)
         self.result[1].append(solved_at)
         driver.quit()
+        self.get_result()
         return True
 
     def _predict(self, driver, predictions, label):
@@ -315,6 +315,7 @@ class Application():
         plt.bar(X, Y)
         plt.xlabel("Attempt")
         plt.xticks(X, self.result[1])
+        plt.xticks(rotation=45, ha='right')
         plt.ylabel("Verify Count")
         plt.ylim(0, 5)
         plt.title("RESULT")
@@ -326,8 +327,8 @@ class Application():
 if __name__ == "__main__":
     # TABLE RESULT WILL SHOW VERIFY ATTEMPTS IN EACH CAPTCHA ATTEMPT
     # 0 MEANS IT FAILED (VERIFY ATTEMPTS >= 5)
-    app = Application("../data/solver/multilabel_model.h5", 10, "multi")
-    app.get_result()
+    # app = Application("../data/solver/multilabel_model.h5", 100, "multi")
+    # app.get_result()
     # app = Application("../data/solver/multilabel_model_trained.h5", 3, "multi")
     # app.get_result()
     # app = Application("../data/solver/test.h5", 3, "multi")
@@ -336,5 +337,5 @@ if __name__ == "__main__":
     # app.get_result()
     # app = Application("../data/solver/test.h5", 100, "multi")
     # app.get_result()
-    # app = Application("../data/solver/model_test2.h5", 100, "single")
-    # app.get_result()
+    app = Application("../data/solver/model_test2.h5", 100, "single")
+    app.get_result()
