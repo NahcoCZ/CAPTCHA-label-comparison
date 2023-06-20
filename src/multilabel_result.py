@@ -199,7 +199,10 @@ class Application():
         mode: (multi/single) for the label types
         """
         self.model = tf.keras.models.load_model(model_path)
-        self.result = [[], []]
+        self.mode = mode
+        # self.result = [[], []]
+        with open("../data/multiresult/result.csv", "r") as file:
+            self.result = eval(file.readline())
 
         if mode == "multi":
             self.label_names = [
@@ -284,20 +287,22 @@ class Application():
         Loop the prediction while clicks are not 0
         """
         while True:
+            if self.mode == "single":
+                predictions = self._change_prediction(predictions)
             # UNCOMMENT TO SEE PREDICTION RESULTS
             # images = driver.get_images()
             # index = 0
             # for i in images:
             #     plt.imshow(i)
             #     plt.show()
-            #     for j in predictions[index]:
-            #         print("%s: %.4f" % (self.label_names[np.where(predictions[index] == j)[0][0]], j))
+            #     for j in range(len(predictions[index])):
+            #         print("%s: %.4f" % (self.label_names[j], predictions[index][j]))
             #     index += 1
             driver.set_click_count(0)
-            for i in predictions:
+            for i in range(len(predictions)):
                 # CONFIGURE DECODE THRESHOLD HERE
-                if i[label] >= 0.2:
-                    driver.click_box(np.where(predictions == i)[0][0])
+                if predictions[i][label] >= 0.2:
+                    driver.click_box(i)
             if len(driver.find_elements_by_tag_name("span")) == 0:
                 return
             if driver.get_click_count() > 0:
@@ -308,6 +313,14 @@ class Application():
                 predictions = self.model.predict(driver.get_images()) # type: ignore
             else:
                 break
+
+    def _change_prediction(self, prediction):
+        for i in range(len(prediction)):
+            argmax = np.argmax(prediction[i])
+            for j in range(len(prediction[i])):
+                if j != argmax:
+                    prediction[i][j] = 0.0
+        return prediction
 
     def get_result(self):
         X = range(1, len(self.result[0]) + 1)
