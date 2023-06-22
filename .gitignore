@@ -1,5 +1,9 @@
 image_data.npy
 label_data.npy
+X.npy
+Y.npy
+X1.npy
+Y1.npy
 data/solver/captcha.jpeg
 data/solver/captcha-tile-0.jpeg
 data/solver/captcha-tile-1.jpeg
@@ -10,3 +14,6 @@ data/solver/captcha-tile-5.jpeg
 data/solver/captcha-tile-6.jpeg
 data/solver/captcha-tile-7.jpeg
 data/solver/captcha-tile-8.jpeg
+data/images/idxdata.csv
+src/testing.py
+labelling_app.exe
