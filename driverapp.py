@@ -9,7 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from fake_useragent import UserAgent
 from PIL import Image
 
 class WebDriver(webdriver.Chrome):
@@ -21,7 +20,6 @@ class WebDriver(webdriver.Chrome):
         self._click_count = 0
         self.reload_counter = 0
         self._clicked = []
-        # self.get("https://patrickhlauke.github.io/recaptcha/")
         self.get("https://www.google.com/recaptcha/api2/demo")
         self.fullscreen_window()
         self.find_element_by_css_selector('[title="reCAPTCHA"]').click()
@@ -46,8 +44,8 @@ class WebDriver(webdriver.Chrome):
         self._find_3x3_box()
         if self.reload_counter > 7:
             return
-        urllib.request.urlretrieve(self.find_element_by_class_name("rc-image-tile-33").get_attribute("src"), "../data/solver/captcha.jpeg")
-        self.images = self._crop_image_and_convert(Image.open("../data/solver/captcha.jpeg"))
+        urllib.request.urlretrieve(self.find_element_by_class_name("rc-image-tile-33").get_attribute("src"), "./data/solver/captcha.jpeg")
+        self.images = self._crop_image_and_convert(Image.open("./data/solver/captcha.jpeg"))
 
     def get_captcha_label(self, labels):
         label_text = self.find_element_by_tag_name("strong").text
@@ -70,7 +68,7 @@ class WebDriver(webdriver.Chrome):
         print("DEBUG =", self._clicked)
         for index in self._clicked:
             img_element = self.find_elements_by_tag_name("td")[index].find_element_by_class_name("rc-image-tile-11")
-            file_path = "../data/solver/captcha-tile-%d.jpeg" % index
+            file_path = "./data/solver/captcha-tile-%d.jpeg" % index
             urllib.request.urlretrieve(img_element.get_attribute("src"), file_path)
             self.images[index] = self._process_image(Image.open(file_path))
         self._clicked = []
@@ -200,9 +198,9 @@ class Application():
         """
         self.model = tf.keras.models.load_model(model_path)
         self.mode = mode
-        # self.result = [[], []]
-        with open("../data/multiresult/result.csv", "r") as file:
-            self.result = eval(file.readline())
+        self.result = [[], []]
+        # with open("./data/multiresult/result.csv", "r") as file:
+        #     self.result = eval(file.readline())
 
         if mode == "multi":
             self.label_names = [
@@ -252,12 +250,7 @@ class Application():
         """
         Main method to solve the captcha
         """
-        options = Options()
-        ua = UserAgent()
-        user_agent = ua.random
-        print("user_agent =", user_agent)
-        options.add_argument(f'user-agent={user_agent}')
-        driver = WebDriver(executable_path="../driver/chromedriver.exe")
+        driver = WebDriver(executable_path="./driver/chromedriver.exe")
         solved_at = "None"
 
         # SOLVE HERE
@@ -315,6 +308,10 @@ class Application():
                 break
 
     def _change_prediction(self, prediction):
+        """
+        To ensure the single label classification predictions
+        can only classify one image
+        """
         for i in range(len(prediction)):
             argmax = np.argmax(prediction[i])
             for j in range(len(prediction[i])):
@@ -323,6 +320,9 @@ class Application():
         return prediction
 
     def get_result(self):
+        """
+        Print the resulting table of the attempts
+        """
         X = range(1, len(self.result[0]) + 1)
         Y = self.result[0]
         plt.bar(X, Y)
@@ -333,22 +333,20 @@ class Application():
         plt.ylim(0, 5)
         plt.title("RESULT")
         plt.show()
-        with open("../data/multiresult/result.csv", "w") as file:
+        with open("./data/multiresult/result.csv", "w") as file:
             file.write(str(self.result))
 
 # MAIN DRIVER
 if __name__ == "__main__":
     # TABLE RESULT WILL SHOW VERIFY ATTEMPTS IN EACH CAPTCHA ATTEMPT
     # 0 MEANS IT FAILED (VERIFY ATTEMPTS >= 5)
-    # app = Application("../data/solver/multilabel_model.h5", 100, "multi")
-    # app.get_result()
-    # app = Application("../data/solver/multilabel_model_trained.h5", 3, "multi")
-    # app.get_result()
-    # app = Application("../data/solver/test.h5", 3, "multi")
-    # app.get_result()
-    # app = Application("../data/solver/multilabel_model_trained.h5", 100, "multi")
-    # app.get_result()
-    # app = Application("../data/solver/test.h5", 100, "multi")
-    # app.get_result()
-    app = Application("../data/solver/model_test2.h5", 100, "single")
+
+    # Multi Label solving
+    app = Application("./data/solver/multilabel_model.h5", 10, "multi")
     app.get_result()
+
+    # Single Label solving
+    app = Application("./data/solver/singlelabel_model.h5", 10, "single")
+    app.get_result()
+
+    # Change the second parameter to change the attempt limit
